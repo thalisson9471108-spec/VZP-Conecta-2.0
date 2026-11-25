@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VZP Conecta </title>
+
+  <link rel="icon" type="image/png" href="logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<!-- ===== TELA DE LOGIN (Novo Design) ===== -->
+<div class="auth-screen active" id="authScreen">
+    <!-- LEFT: Branding -->
+    <aside class="brand-panel">
+        <div class="brand-top">
+            <div class="brand-logo">
+                <div class="brand-logo-icon">V</div>
+                <div class="brand-logo-text">VZP <span>Conecta</span></div>
+            </div>
+            <h1 class="brand-headline">Conecte-se ao comércio de Várzea da Palma</h1>
+            <p class="brand-description">
+                O guia comercial digital que une empresas e clientes da nossa cidade. Encontre, divulgue e cresça junto.
+            </p>
+        </div>
+        <p class="brand-footer">© 2026 VZP Conecta · Várzea da Palma – MG</p>
+    </aside>
+
+    <!-- RIGHT: Form -->
+    <main class="form-panel">
+        <header class="form-header">
+            <h2 class="form-title">Bem-vindo!</h2>
+            <p class="form-subtitle">Entre ou crie uma conta para continuar</p>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs" role="tablist">
+            <button class="tab active" role="tab" aria-selected="true" onclick="switchAuthTab('login')">
+                <i class="fas fa-sign-in-alt"></i> Entrar
+            </button>
+            <button class="tab" role="tab" aria-selected="false" onclick="switchAuthTab('register')">
+                <i class="fas fa-user-plus"></i> Criar conta
+            </button>
+        </div>
+
+        <!-- FORM DE LOGIN -->
+        <form id="formLogin" class="auth-form active" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label class="form-label">E-mail <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="seu@email.com" required autocomplete="email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Senha <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                    <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="checkbox-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rememberMe" checked>
+                    <span class="checkbox-custom"></span>
+                    Lembrar de mim
+                </label>
+                <a href="#" class="forgot-link" onclick="event.preventDefault(); showToast('📧 Enviado por e-mail', 'success')">Esqueceu a senha?</a>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Entrar
+            </button>
+        </form>
+
+        <!-- FORM DE CADASTRO -->
+        <form id="formRegister" class="auth-form" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label class="form-label">Nome completo <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-user"></i></span>
+                    <input type="text" id="registerName" class="form-input" placeholder="Seu nome" required autocomplete="name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">E-mail <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="seu@email.com" required autocomplete="email">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Senha <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Mínimo 6 caracteres" required autocomplete="new-password" oninput="checkPasswordStrength()">
+                    <button type="button" class="password-toggle" onclick="togglePassword('registerPassword', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div id="passwordStrength" style="font-size:11.5px; margin-top:6px; font-weight:600;"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirmar senha <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <span class="input-icon"><i class="fas fa-lock"></i></span>
+                    <input type="password" id="registerPasswordConfirm" class="form-input" placeholder="Repita a senha" required autocomplete="new-password">
+                </div>
+            </div>
+
+            <div class="checkbox-row" style="margin-bottom: 24px;">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="agreeTerms" required>
+                    <span class="checkbox-custom"></span>
+                    Concordo com os Termos
+                </label>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-user-plus"></i> Criar conta
+            </button>
+        </form>
+
+        <div class="divider">ou</div>
+
+        <button type="button" class="btn-guest" onclick="loginDemo()">
+            <i class="fas fa-user-circle"></i> Entrar como visitante
+        </button>
+
+    </main>
+</div>
+<!-- ===== MODAL DE CONFIRMAÇÃO ===== -->
+<div class="confirm-modal" id="confirmModal">
+    <div class="confirm-content">
+        <div class="confirm-icon"><i class="fas fa-sign-out-alt"></i></div>
+        <h3 id="confirmTitle">Sair da conta?</h3>
+        <p id="confirmMessage">Você precisará fazer login novamente para acessar.</p>
+        <div class="confirm-actions">
+            <button class="cancel" onclick="closeConfirmModal()">Cancelar</button>
+            <button class="danger" onclick="confirmAction()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== LIGHTBOX ===== -->
+<div class="lightbox" id="lightbox" onclick="if(event.target.id==='lightbox') closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()"><i class="fas fa-times"></i></button>
+    <button class="lightbox-nav prev" onclick="lightboxPrev()"><i class="fas fa-chevron-left"></i></button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+    <button class="lightbox-nav next" onclick="lightboxNext()"><i class="fas fa-chevron-right"></i></button>
+    <div class="lightbox-counter" id="lightboxCounter">1 / 1</div>
+</div>
+
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="logo.png" alt="VZP Conecta" class="logo-img" onerror="this.style.display='none'">
+            <span class="logo-text">VZP Conecta</span>
+        </div>
+        <nav class="nav">
+            <button class="nav-item active" data-tab="map"><i class="fas fa-map"></i><span>Mapa</span></button>
+            <button class="nav-item" data-tab="explore"><i class="fas fa-store"></i><span>Estabelecimentos</span></button>
+            <button class="nav-item" data-tab="routes"><i class="fas fa-route"></i><span>Rotas</span></button>
+            <button class="nav-item" data-tab="history"><i class="fas fa-clock"></i><span>Histórico</span></button>
+            <button class="nav-item" data-tab="settings"><i class="fas fa-cog"></i><span>Configurações</span></button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-card-wrapper">
+                <div class="user-card" onclick="toggleUserMenu(event)">
+                    <div class="avatar" id="userAvatar">UA</div>
+                    <div class="user-info">
+                        <span class="user-name" id="userNameSidebar">Visitante</span>
+                        <span class="user-role" id="userRoleSidebar">ContaTeste</span>
+                    </div>
+                    <i class="fas fa-chevron-up" style="margin-left:auto; font-size:11px; color:var(--text-muted);"></i>
+                </div>
+                <div class="user-menu" id="userMenu">
+                    <button class="user-menu-item" onclick="openProfileModal()"><i class="fas fa-user-edit"></i> Editar perfil</button>
+                    <button class="user-menu-item" onclick="switchTab('settings'); closeUserMenu()"><i class="fas fa-cog"></i> Configurações</button>
+                    <button class="user-menu-item" onclick="showToast('💬 Em breve', 'info'); closeUserMenu()"><i class="fas fa-question-circle"></i> Ajuda</button>
+                    <div style="height:1px; background:var(--border); margin: 6px 0;"></div>
+                    <button class="user-menu-item danger" onclick="requestLogout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+        <header class="topbar">
+            <div class="search-wrapper" id="globalSearchWrapper">
+                <div class="search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="globalSearchInput" placeholder="Buscar estabelecimentos, categorias... (Ctrl+K)" autocomplete="off">
+                    <button class="search-clear" id="globalSearchClear" style="display:none;" onclick="clearGlobalSearch()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="search-dropdown" id="globalSearchDropdown"></div>
+            </div>
+            <div class="topbar-actions">
+                <button class="icon-btn" title="Minha localização" onclick="goToCurrentLocation()">
+                    <i class="fas fa-crosshairs" style="font-size:14px;"></i>
+                </button>
+                <button class="icon-btn" onclick="switchTab('history')">
+                    <i class="fas fa-bell" style="font-size:14px;"></i>
+                    <span class="badge" id="notifBadge">0</span>
+                </button>
+                <button class="btn-primary" onclick="openRegisterModal()">
+                    <i class="fas fa-plus" style="font-size:12px;"></i> Cadastrar Local
+                </button>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <!-- MAPA -->
+            <div class="tab-content active" id="tab-map">
+                <div class="page-header">
+                    <div>
+                        <h1>Mapa</h1>
+                        <p class="subtitle">Várzea da Palma - MG • Visualização por satélite</p>
+                    </div>
+                </div>
+                <div class="map-container" style="height: calc(102vh - 200px);">
+                    <div class="map-header">
+                        <h2><i class="fas fa-map"></i> Mapa da Cidade</h2>
+                        <div class="map-controls-top">
+                            <button class="map-btn active" onclick="setMapLayer('esri', this)">
+                                <i class="fas fa-satellite"></i> Esri
+                            </button>
+                        </div>
+                    </div>
+                    <div class="map-view">
+                        <div id="map"></div>
+                        <div class="gps-indicator">
+                            <span class="gps-dot"></span>
+                            <span id="gpsStatus">GPS Ativo</span>
+                        </div>
+                        
+                        <div class="categories-overlay" id="mapCategories"></div>
+                            </div>
+                           
+                        </div>
+                        <div class="map-sidecard" id="mapSidecard">
+                            <div class="map-sidecard-cover">
+                                <img id="mapSidecardImg" src="" alt="">
+                                <span class="map-sidecard-cover-badge" id="mapSidecardBadge"></span>
+                                <button class="map-sidecard-close" onclick="closeMapSidecard()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <div class="map-sidecard-cover-title" id="mapSidecardTitle"></div>
+                            </div>
+                            <div class="map-sidecard-body" id="mapSidecardBody"></div>
+                        </div>
+                        <div class="map-controls">
+                            <button onclick="zoomIn()" title="Aproximar"><i class="fas fa-plus"></i></button>
+                            <button onclick="zoomOut()" title="Afastar"><i class="fas fa-minus"></i></button>
+                            <button class="location-btn" onclick="goToCurrentLocation()" title="Minha localização"><i class="fas fa-crosshairs"></i></button>
+                        </div>
+                        <div class="route-panel" id="routePanel">
+                            <div class="route-panel-header">
+                                <h3><i class="fas fa-route" style="color:var(--primary-600);"></i> Rota calculada</h3>
+                                <button class="route-panel-close" onclick="clearRoute()"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="route-summary">
+                                <div class="route-summary-item"><div class="value" id="routeDistance">—</div><div class="label">Distância</div></div>
+                                <div class="route-summary-item"><div class="value" id="routeTime">—</div><div class="label">Tempo</div></div>
+                                <div class="route-summary-item"><div class="value" id="routeStepsCount">—</div><div class="label">Passos</div></div>
+                            </div>
+                            <div class="route-steps" id="routeSteps"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESTABELECIMENTOS -->
+            <div class="tab-content" id="tab-explore">
+                <div class="est-hero">
+                    <div class="est-hero-content">
+                        <h1>Guia Comercial</h1>
+                        <p>Descubra os melhores estabelecimentos de Várzea da Palma - MG</p>
+                        <div class="est-hero-search">
+                            <input type="text" id="estSearch" class="est-hero-search-input" placeholder="Buscar por nome, categoria ou bairro...">
+                        </div>
+                    </div>
+                </div>
+                <div class="est-quick-stats">
+                    <div class="est-quick-stat" onclick="clearFilters()">
+                        <div class="est-quick-icon blue"><i class="fas fa-store"></i></div>
+                        <div><div class="est-quick-value" id="statTotal">0</div><div class="est-quick-label">Total</div></div>
+                    </div>
+                    <div class="est-quick-stat" onclick="toggleFilterOpen()">
+                        <div class="est-quick-icon green"><i class="fas fa-clock"></i></div>
+                        <div><div class="est-quick-value" id="statOpen">0</div><div class="est-quick-label">Abertos</div></div>
+                    </div>
+                    <div class="est-quick-stat">
+                        <div class="est-quick-icon orange"><i class="fas fa-check-circle"></i></div>
+                        <div><div class="est-quick-value" id="statVerified">0</div><div class="est-quick-label">Verificados</div></div>
+                    </div>
+                    <div class="est-quick-stat" onclick="toggleFilterPending()">
+                        <span class="est-quick-badge" id="pendingBadge" style="display:none;">0</span>
+                        <div class="est-quick-icon red"><i class="fas fa-clock-rotate-left"></i></div>
+                        <div><div class="est-quick-value" id="statPending">0</div><div class="est-quick-label">Pendentes</div></div>
+                    </div>
+                </div>
+                <div class="est-filters-bar">
+                    <div class="est-chips" id="estCategories"></div>
+                    <div class="est-tools">
+                        <button class="est-tool-btn" id="estFilterOpen"><i class="fas fa-clock"></i> Abertos</button>
+                        <button class="est-tool-btn" id="estFilterFav"><i class="fas fa-heart"></i> Favoritos</button>
+                        <button class="est-tool-btn warning" id="estFilterPending"><i class="fas fa-clock-rotate-left"></i> Pendentes</button>
+                    </div>
+                </div>
+                <div class="est-results-header">
+                    <div><strong id="estCount">0</strong> estabelecimentos encontrados</div>
+                    <select class="est-sort-select" id="estSortSelect">
+                        <option value="relevance">Relevância</option>
+                        <option value="name">Nome (A-Z)</option>
+                    </select>
+                </div>
+                <div class="est-grid" id="estGrid"></div>
+            </div>
+
+            <!-- ROTAS -->
+            <div class="tab-content" id="tab-routes">
+                <div class="page-header">
+                    <div>
+                        <h1>Rotas Turísticas</h1>
+                        <p class="subtitle">Roteiros prontos para você explorar Várzea da Palma</p>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-route"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Rotas disponíveis</span>
+                            <span class="stat-value" id="routesCount">5</span>
+                            <span class="stat-trend up">Prontas para usar</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-map-pin"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Paradas no total</span>
+                            <span class="stat-value" id="routesStops">15</span>
+                            <span class="stat-trend up">Em 5 roteiros</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Duração média</span>
+                            <span class="stat-value">4h</span>
+                            <span class="stat-trend up">Por roteiro</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fas fa-star"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Avaliação média</span>
+                            <span class="stat-value">4.7</span>
+                            <span class="stat-trend up">⭐ Excelente</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="routes-grid" id="routesGrid"></div>
+            </div>
+
+            <!-- HISTÓRICO -->
+            <div class="tab-content" id="tab-history">
+                <div class="page-header">
+                    <div>
+                        <h1>Histórico</h1>
+                        <p class="subtitle">Acompanhe suas atividades e interações</p>
+                    </div>
+                    <button class="btn-primary" onclick="clearHistory()">
+                        <i class="fas fa-trash" style="font-size:12px;"></i> Limpar
+                    </button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-history"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Total de eventos</span>
+                            <span class="stat-value" id="historyTotal">0</span>
+                            <span class="stat-trend up">Registrados</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-map-pin"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Locais visitados</span>
+                            <span class="stat-value" id="historyVisits">0</span>
+                            <span class="stat-trend up">Locais</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-route"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Rotas traçadas</span>
+                            <span class="stat-value" id="historyRoutes">0</span>
+                            <span class="stat-trend up">Rotas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><i class="fas fa-heart"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-label">Favoritos salvos</span>
+                            <span class="stat-value" id="historyFavs">0</span>
+                            <span class="stat-trend up">Favoritos</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="history-filters">
+                    <button class="history-filter active" data-filter="all"><i class="fas fa-layer-group"></i> Todos</button>
+                    <button class="history-filter" data-filter="visit"><i class="fas fa-map-pin"></i> Visitas</button>
+                    <button class="history-filter" data-filter="route"><i class="fas fa-route"></i> Rotas</button>
+                    <button class="history-filter" data-filter="fav"><i class="fas fa-heart"></i> Favoritos</button>
+                    <button class="history-filter" data-filter="review"><i class="fas fa-star"></i> Avaliações</button>
+                    <button class="history-filter" data-filter="create"><i class="fas fa-plus-circle"></i> Cadastros</button>
+                </div>
+                <div class="history-timeline" id="historyTimeline"></div>
+            </div>
+
+            <!-- CONFIGURAÇÕES -->
+            <div class="tab-content" id="tab-settings">
+                <div class="page-header">
+                    <div>
+                        <h1>Configurações</h1>
+                        <p class="subtitle">Personalize sua experiência no VZP Conecta</p>
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <nav class="settings-nav">
+                        <button class="settings-nav-item active" data-panel="geral"><i class="fas fa-sliders-h"></i> Geral</button>
+                        <button class="settings-nav-item" data-panel="aparencia"><i class="fas fa-palette"></i> Aparência</button>
+                        <button class="settings-nav-item" data-panel="mapa"><i class="fas fa-map"></i> Mapa</button>
+                        <button class="settings-nav-item" data-panel="notificacoes"><i class="fas fa-bell"></i> Notificações</button>
+                        <button class="settings-nav-item" data-panel="privacidade"><i class="fas fa-lock"></i> Privacidade</button>
+                        <button class="settings-nav-item" data-panel="dados"><i class="fas fa-database"></i> Dados</button>
+                        <button class="settings-nav-item" data-panel="acessibilidade"><i class="fas fa-universal-access"></i> Acessibilidade</button>
+                        <button class="settings-nav-item" data-panel="sobre"><i class="fas fa-info-circle"></i> Sobre</button>
+                    </nav>
+                    <div class="settings-panels">
+                        <div class="settings-panel active" id="panel-geral">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-language" style="color:var(--primary-600);"></i> Idioma e Região</h3>
+                                <p class="section-desc">Como o app fala e mostra informações</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Idioma</div><div class="settings-desc">Idioma da interface</div></div>
+                                    <select class="settings-select"><option>Português (BR)</option><option>English</option><option>Español</option></select>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Unidades de distância</div><div class="settings-desc">Como mostrar distâncias</div></div>
+                                    <select class="settings-select"><option>Quilômetros (km)</option><option>Metros (m)</option><option>Milhas (mi)</option></select>
+                                </div>
+                            </div>
+                            <div class="settings-section">
+                                <h3><i class="fas fa-mouse-pointer" style="color:var(--primary-600);"></i> Comportamento</h3>
+                                <p class="section-desc">Como o app interage com você</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Abrir links externos</div><div class="settings-desc">Abrir WhatsApp, Maps, etc. em nova aba</div></div>
+                                    <div class="switch active" onclick="toggleSetting(this, 'Abrir links externos')"><div class="thumb"></div></div>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Confirmações</div><div class="settings-desc">Pedir confirmação antes de ações destrutivas</div></div>
+                                    <div class="switch active" onclick="toggleSetting(this, 'Confirmações')"><div class="thumb"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-aparencia">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-palette" style="color:var(--primary-600);"></i> Tema</h3>
+                                <p class="section-desc">Escolha as cores do VZP Conecta</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Modo escuro</div><div class="settings-desc">Interface escura</div></div>
+                                    <div class="switch" id="darkModeSwitch" onclick="toggleDarkMode(this)"><div class="thumb"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-mapa">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-satellite" style="color:var(--primary-600);"></i> Visualização</h3>
+                                <p class="section-desc">Como o mapa aparece</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Fonte padrão</div><div class="settings-desc">Camada inicial do mapa</div></div>
+                                    <select class="settings-select"><option>Esri (padrão)</option><option>Sentinel-2</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-notificacoes">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-bell" style="color:var(--primary-600);"></i> Push</h3>
+                                <p class="section-desc">Alertas enviados para o seu dispositivo</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Notificações ativadas</div><div class="settings-desc">Receber alertas em tempo real</div></div>
+                                    <div class="switch active" onclick="toggleSetting(this, 'Notificações')"><div class="thumb"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-privacidade">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-shield-alt" style="color:var(--primary-600);"></i> Dados Coletados</h3>
+                                <p class="section-desc">Controle como seus dados são usados</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Histórico de atividades</div><div class="settings-desc">Salvar suas visitas e rotas</div></div>
+                                    <div class="switch active" onclick="toggleSetting(this, 'Histórico')"><div class="thumb"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-dados">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-database" style="color:var(--primary-600);"></i> Armazenamento</h3>
+                                <p class="section-desc">Gerencie os dados salvos no seu dispositivo</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Tamanho dos dados</div><div class="settings-desc">Espaço usado no navegador</div></div>
+                                    <span style="font-size:13px; font-weight:700; color:var(--primary-600);" id="dataSize">— KB</span>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Limpar histórico</div><div class="settings-desc">Apagar todas as atividades registradas</div></div>
+                                    <button class="settings-btn danger" onclick="clearHistory()"><i class="fas fa-trash"></i> Limpar</button>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Limpar favoritos</div><div class="settings-desc">Remover todos os locais favoritados</div></div>
+                                    <button class="settings-btn danger" onclick="clearFavorites()"><i class="fas fa-heart-broken"></i> Limpar</button>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Limpar avaliações</div><div class="settings-desc">Apagar todas as suas avaliações</div></div>
+                                    <button class="settings-btn danger" onclick="clearReviews()"><i class="fas fa-star"></i> Limpar</button>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Limpar locais cadastrados</div><div class="settings-desc">Remover locais que você cadastrou</div></div>
+                                    <button class="settings-btn danger" onclick="clearUserEstablishments()"><i class="fas fa-store-slash"></i> Limpar</button>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Exportar dados</div><div class="settings-desc">Baixar arquivo JSON com tudo</div></div>
+                                    <button class="settings-btn" onclick="exportData()"><i class="fas fa-download"></i> Exportar</button>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Resetar tudo</div><div class="settings-desc">Apagar todos os dados do app</div></div>
+                                    <button class="settings-btn danger" onclick="resetAll()"><i class="fas fa-exclamation-triangle"></i> Resetar</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-acessibilidade">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-universal-access" style="color:var(--primary-600);"></i> Visão</h3>
+                                <p class="section-desc">Ajustes para melhor visibilidade</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Alto contraste</div><div class="settings-desc">Aumenta o contraste das cores</div></div>
+                                    <div class="switch" onclick="toggleSetting(this, 'Alto contraste')"><div class="thumb"></div></div>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Fonte maior</div><div class="settings-desc">Aumenta o tamanho do texto</div></div>
+                                    <div class="switch" onclick="toggleSetting(this, 'Fonte maior')"><div class="thumb"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel" id="panel-sobre">
+                            <div class="settings-section">
+                                <h3><i class="fas fa-info-circle" style="color:var(--primary-600);"></i> VZP Conecta</h3>
+                                <p class="section-desc">Informações do aplicativo</p>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Versão</div><div class="settings-desc">Última atualização</div></div>
+                                    <span style="font-size:13px; font-weight:700; color:var(--primary-600);">v4.2.0</span>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Estabelecimentos cadastrados</div><div class="settings-desc">Total no banco de dados</div></div>
+                                    <span style="font-size:13px; font-weight:700;" id="aboutCount">0</span>
+                                </div>
+                                <div class="settings-item">
+                                    <div class="settings-info"><div class="settings-label">Compartilhar o app</div><div class="settings-desc">Envie para seus amigos</div></div>
+                                    <button class="settings-btn" onclick="shareApp()"><i class="fas fa-share-alt"></i> Compartilhar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- MODAL DETALHES -->
+<div id="estModal" class="est-modal">
+    <div class="est-modal-content"></div>
+</div>
+
+<!-- MODAL DE CADASTRO -->
+<div id="registerModal" class="est-form-modal">
+    <div class="est-form-content">
+        <div class="est-form-header">
+            <h2><i class="fas fa-plus-circle" style="color:var(--primary-600);"></i> Cadastrar Local</h2>
+            <button class="est-form-close" onclick="closeRegisterModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="est-form-progress">
+            <div class="est-form-step-indicator active" data-step="1"><span class="num">1</span> Básico</div>
+            <div class="est-form-step-indicator" data-step="2"><span class="num">2</span> Endereço</div>
+            <div class="est-form-step-indicator" data-step="3"><span class="num">3</span> Contato</div>
+            <div class="est-form-step-indicator" data-step="4"><span class="num">4</span> Horários</div>
+        </div>
+        <div class="est-form-body">
+            <div class="est-form-step active" data-step="1">
+                <div class="est-form-grid">
+                    <div class="est-form-group full">
+                        <label>Nome do estabelecimento <span class="req">*</span></label>
+                        <input type="text" id="reg-name" placeholder="Ex: Restaurante Sabor Mineiro" required>
+                    </div>
+                    <div class="est-form-group full">
+                        <label>Categoria <span class="req">*</span></label>
+                        <select id="reg-category" required><option value="">Selecione...</option></select>
+                    </div>
+                    <div class="est-form-group full">
+                        <label>Descrição <span class="optional">(opcional)</span></label>
+                        <textarea id="reg-description" placeholder="Conte um pouco sobre o estabelecimento..."></textarea>
+                    </div>
+                    <div class="est-form-group full">
+                        <label>Fotos do estabelecimento <span class="optional">(opcional, até 6)</span></label>
+                        <div class="est-form-photo-tabs">
+                            <button type="button" class="est-form-photo-tab active" onclick="switchPhotoTab('url')"><i class="fas fa-link"></i> URL</button>
+                            <button type="button" class="est-form-photo-tab" onclick="switchPhotoTab('upload')"><i class="fas fa-upload"></i> Upload</button>
+                        </div>
+                        <div class="est-form-photo-pane active" id="pane-url">
+                            <div style="display:flex; gap:8px;">
+                                <input type="url" id="reg-photo-url" placeholder="https://exemplo.com/foto.jpg" style="flex:1;">
+                                <button type="button" class="est-form-btn primary" style="flex:0 0 auto; padding: 0 18px;" onclick="addPhotoFromUrl()"><i class="fas fa-plus"></i> Adicionar</button>
+                            </div>
+                        </div>
+                        <div class="est-form-photo-pane" id="pane-upload">
+                            <div class="est-form-upload" onclick="document.getElementById('reg-photo-file').click()">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Clique para escolher fotos</p>
+                                <span>JPG, PNG até 5MB cada</span>
+                                <input type="file" id="reg-photo-file" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
+                            </div>
+                        </div>
+                        <div class="form-gallery" id="formGallery"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="est-form-step" data-step="2">
+                <div class="est-form-grid">
+                    <div class="est-form-group full">
+                        <label>CEP <span class="optional">(opcional)</span></label>
+                        <div class="est-form-cep-row">
+                            <input type="text" id="reg-zipcode" placeholder="39260-000" maxlength="9" oninput="formatCEP(this)">
+                            <button type="button" class="est-form-cep-btn" onclick="buscarCEP(event)"><i class="fas fa-search"></i> Buscar</button>
+                        </div>
+                        <div class="est-form-hint" id="hint-cep">Digite o CEP e clique em Buscar para preencher automaticamente</div>
+                    </div>
+                    <div class="est-form-group full">
+                        <label>Rua/Avenida <span class="req">*</span></label>
+                        <input type="text" id="reg-address" placeholder="Ex: Rua Joaquim Marques Carvalho" required>
+                    </div>
+                    <div class="est-form-group">
+                        <label>Número <span class="req">*</span></label>
+                        <input type="text" id="reg-number" placeholder="Ex: 868" required>
+                    </div>
+                    <div class="est-form-group">
+                        <label>Complemento <span class="optional">(opcional)</span></label>
+                        <input type="text" id="reg-complement" placeholder="Sala, loja, andar...">
+                    </div>
+                    <div class="est-form-group full">
+                        <label>Bairro <span class="req">*</span></label>
+                        <input type="text" id="reg-neighborhood" placeholder="Ex: Centro" required>
+                    </div>
+                    <div class="est-form-group full">
+                        <label>Coordenadas (opcional, mas recomendado)</label>
+                        <div class="est-form-coords">
+                            <input type="number" id="reg-lat" placeholder="Latitude" step="any">
+                            <input type="number" id="reg-lng" placeholder="Longitude" step="any">
+                            <button type="button" class="est-form-coords-btn" onclick="useMyLocation()"><i class="fas fa-crosshairs"></i> GPS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="est-form-step" data-step="3">
+                <div class="est-form-grid">
+                    <div class="est-form-group">
+                        <label>Telefone <span class="optional">(opcional)</span></label>
+                        <input type="tel" id="reg-phone" placeholder="(38) 3731-0000" oninput="formatPhone(this)">
+                    </div>
+                    <div class="est-form-group">
+                        <label>WhatsApp <span class="optional">(opcional)</span></label>
+                        <input type="tel" id="reg-whatsapp" placeholder="(38) 99999-9999" oninput="formatPhone(this)">
+                    </div>
+                    <div class="est-form-group">
+                        <label>Instagram <span class="optional">(opcional)</span></label>
+                        <input type="text" id="reg-instagram" placeholder="@usuario">
+                    </div>
+                    <div class="est-form-group">
+                        <label>Site <span class="optional">(opcional)</span></label>
+                        <input type="url" id="reg-website" placeholder="https://...">
+                    </div>
+                </div>
+            </div>
+            <div class="est-form-step" data-step="4">
+                <div class="est-form-grid">
+                    <div class="est-form-group full">
+                        <label>Horário de funcionamento <span class="optional">(opcional)</span></label>
+                        <div class="hours-editor" id="hoursEditor"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="est-form-footer">
+            <button type="button" class="est-form-btn secondary" onclick="prevStep()" id="btnPrev" style="display:none;"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <button type="button" class="est-form-btn primary" onclick="nextStep()" id="btnNext">Próximo <i class="fas fa-arrow-right"></i></button>
+            <button type="button" class="est-form-btn success" onclick="submitEstablishment()" id="btnSubmit" style="display:none;"><i class="fas fa-check"></i> Enviar cadastro</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle" id="toastIcon"></i>
+    <span id="toastMessage">Pronto!</span>
+    <button class="toast-close" onclick="hideToast()"><i class="fas fa-times"></i></button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
